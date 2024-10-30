@@ -1,35 +1,48 @@
-# Étape 1 : Partir de l'image Jenkins avec Java 17
-FROM jenkins/jenkins:jdk17 AS jenkins
+# Start with the latest Jenkins image
+FROM jenkins/jenkins:latest AS jenkins
 
-# Passer en mode root pour installer les dépendances
+# Switch to root user to perform installations
 USER root
 
-# Désactiver l'assistant d'installation initial
+# Set environment variables
 ENV JAVA_OPTS="-Djenkins.install.runSetupWizard=false"
 ENV CASC_JENKINS_CONFIG="/var/jenkins_home/casc.yaml"
 
-# Copier les fichiers nécessaires
+# Copy necessary files
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 COPY pipeline.groovy /var/jenkins_home/pipeline.groovy
 
-# Installer les plugins Jenkins spécifiés
+# Install Jenkins plugins
 RUN jenkins-plugin-cli -f /usr/share/jenkins/ref/plugins.txt
 
-# Copier le fichier Configuration as Code (CasC)
+# Copy Configuration as Code (CasC) file
 COPY casc.yaml /var/jenkins_home/casc.yaml
 
-# Télécharger et installer Maven
+# Use OpenJDK 17 as the base for the final image
+FROM openjdk:17-jdk
+
+# Set environment variables for Maven
 ENV MAVEN_VERSION=3.6.3
 ENV MAVEN_HOME=/usr/share/maven
 ENV PATH="${MAVEN_HOME}/bin:${PATH}"
-RUN mkdir -p /usr/share/maven \
-    && curl -fsSL https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz | tar -xzC /usr/share/maven --strip-components=1
 
-# Vérifier l'installation de Maven
+# Copy Jenkins from the first stage
+COPY --from=jenkins /var/jenkins_home /var/jenkins_home
+COPY --from=jenkins /usr/share/jenkins/ref/plugins.txt /usr/share/jenkins/ref/plugins.txt
+
+# Install required tools
+RUN apt-get update && apt-get install -y curl && apt-get clean
+
+# Download and install Maven
+RUN mkdir -p /usr/share/maven \
+    && curl -fsSL https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
+    | tar -xzC /usr/share/maven --strip-components=1
+
+# Verify Maven installation
 RUN mvn --version
 
-# Définir le dossier de travail par défaut
+# Set the default working directory
 WORKDIR /var/jenkins_home
 
-# Lancer Jenkins par défaut
+# Set the default command to start Jenkins
 CMD ["java", "-jar", "/usr/share/jenkins/jenkins.war"]
