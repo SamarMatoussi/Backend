@@ -13,7 +13,7 @@ services:
   jcasc_maven_1:
     build:
       context: .
-      dockerfile: Dockerfile.maven  # Assurez-vous que ce fichier existe
+      dockerfile: Dockerfile
 
   nexus:
     image: sonatype/nexus3
