@@ -23,7 +23,7 @@ pipeline {
         stage('Clone repository') {
             steps {
                 echo 'Cloning the repository'
-                git branch: 'master', credentialsId: 'github-credentials', url: 'https://github.com/SamarMatoussi/docker-spring-boot.git'
+                git branch: 'master', credentialsId: 'github-credentials', url: 'https://github.com/SamarMatoussi/Backend.git'
             }
         }
         stage('Maven Build') {
