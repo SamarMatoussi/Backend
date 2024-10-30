@@ -32,4 +32,5 @@ RUN mvn --version
 WORKDIR /var/jenkins_home
 
 # Lancer Jenkins par défaut
-CMD ["jenkins"]
+# Utiliser la commande correcte pour démarrer Jenkins
+CMD ["java", "-jar", "/usr/share/jenkins/jenkins.war"]
