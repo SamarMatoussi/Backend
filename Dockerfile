@@ -18,25 +18,8 @@ RUN jenkins-plugin-cli -f /usr/share/jenkins/ref/plugins.txt
 # Copy Configuration as Code (CasC) file
 COPY casc.yaml /var/jenkins_home/casc.yaml
 
-# Use OpenJDK 17 as the base for the final image
-FROM openjdk:17-jdk
-
-# Set environment variables for Maven
-ENV MAVEN_VERSION=3.6.3
-ENV MAVEN_HOME=/usr/share/maven
-ENV PATH="${MAVEN_HOME}/bin:${PATH}"
-
-# Copy Jenkins from the first stage
-COPY --from=jenkins /var/jenkins_home /var/jenkins_home
-COPY --from=jenkins /usr/share/jenkins/ref/plugins.txt /usr/share/jenkins/ref/plugins.txt
-
 # Install required tools
-RUN apt-get update && apt-get install -y curl && apt-get clean
-
-# Download and install Maven
-RUN mkdir -p /usr/share/maven \
-    && curl -fsSL https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
-    | tar -xzC /usr/share/maven --strip-components=1
+RUN apt-get update && apt-get install -y curl maven && apt-get clean
 
 # Verify Maven installation
 RUN mvn --version
