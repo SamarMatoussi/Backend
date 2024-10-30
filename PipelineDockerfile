@@ -1,16 +1,16 @@
 # Use the latest Ubuntu LTS as the base image
-FROM ubuntu:latest
+FROM ubuntu:22.04
 
 # Set the Dockerfile author
-LABEL maintainer="Your Name <your.email@example.com>"
+LABEL maintainer="Your Name <matoussi.samar20@gmail.com>"
 
 # Switch to root user to perform installation
 USER root
 
-# Install Git to clone repositories
+# Install Git and wget to clone repositories and download Nexus
 RUN apt-get update -yqq && \
-    apt-get install -yqq git && \
-    echo "Git installed successfully"
+    apt-get install -yqq git wget && \
+    echo "Git and wget installed successfully"
 
 # Install Docker to manage containers
 RUN apt-get update -yqq && \
@@ -25,7 +25,7 @@ RUN apt-get update -yqq && \
         "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
         $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
     apt-get update -yqq && \
-    apt-get install -yqq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose && \
+    apt-get install -yqq docker-ce docker-ce-cli containerd.io docker-compose && \
     echo "Docker installed successfully"
 
 # Install Nexus Repository Manager
@@ -34,9 +34,7 @@ ENV NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSI
 ENV NEXUS_HOME=/opt/nexus
 ENV NEXUS_DATA=/nexus-data
 
-RUN apt-get update -yqq && \
-    apt-get install -yqq wget && \
-    wget -q ${NEXUS_DOWNLOAD_URL} -O /tmp/nexus.tar.gz && \
+RUN wget -q ${NEXUS_DOWNLOAD_URL} -O /tmp/nexus.tar.gz && \
     mkdir -p ${NEXUS_HOME} && \
     tar -zxvf /tmp/nexus.tar.gz --strip-components=1 -C ${NEXUS_HOME} && \
     rm /tmp/nexus.tar.gz && \
