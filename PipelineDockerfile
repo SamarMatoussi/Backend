@@ -1,31 +1,55 @@
+# Use the latest Ubuntu LTS as the base image
 FROM ubuntu:latest
 
+# Set the Dockerfile author
+LABEL maintainer="Your Name <your.email@example.com>"
+
+# Switch to root user to perform installation
 USER root
-#installing git to clone the repository
-RUN apt-get update -yqq
-RUN apt-get install git -yqq
-RUN echo "git is installed successfully"
-#installing docker (to create and push images)
-RUN apt-get update -yqq 
-RUN apt-get install ca-certificates curl gnupg -yqq
-#RUN apt-get install -m 0755 -d /etc/apt/keyrings -yqq
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-RUN chmod a+r /etc/apt/keyrings/docker.gpg
-RUN echo \
-  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-  tee /etc/apt/sources.list.d/docker.list > /dev/null
-RUN apt-get update -yqq
-RUN apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -yqq
-#RUN docker run -v /var/run/docker.sock:/var/run/docker.sock hello-world
-RUN echo "docker is installed successfully"
-#installing phpunit for unit tests
-RUN apt-get update
-ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get install -y php
-RUN apt-get clean
-RUN apt-get install -y php-xml php-dom php-json php-mbstring php-tokenizer php-xmlwriter
-RUN curl --location --output /usr/local/bin/phpunit "https://phar.phpunit.de/phpunit.phar"
-RUN chmod +x /usr/local/bin/phpunit
-RUN echo "php is installed successfully" 
-#
+
+# Install Git to clone repositories
+RUN apt-get update -yqq && \
+    apt-get install -yqq git && \
+    echo "Git installed successfully"
+
+# Install Docker to manage containers
+RUN apt-get update -yqq && \
+    apt-get install -yqq \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        gnupg-agent \
+        software-properties-common && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
+    echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+        $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update -yqq && \
+    apt-get install -yqq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose && \
+    echo "Docker installed successfully"
+
+# Install Nexus Repository Manager
+ENV NEXUS_VERSION=3.36.0-02
+ENV NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/3/nexus-${NEXUS_VERSION}-unix.tar.gz
+ENV NEXUS_HOME=/opt/nexus
+ENV NEXUS_DATA=/nexus-data
+
+RUN apt-get update -yqq && \
+    apt-get install -yqq wget && \
+    wget -q ${NEXUS_DOWNLOAD_URL} -O /tmp/nexus.tar.gz && \
+    mkdir -p ${NEXUS_HOME} && \
+    tar -zxvf /tmp/nexus.tar.gz --strip-components=1 -C ${NEXUS_HOME} && \
+    rm /tmp/nexus.tar.gz && \
+    adduser --disabled-login --system --home ${NEXUS_HOME} nexus && \
+    mkdir -p ${NEXUS_DATA} && \
+    chown -R nexus:nexus ${NEXUS_HOME} ${NEXUS_DATA} && \
+    echo "Nexus installed successfully"
+
+# Expose Nexus port
+EXPOSE 8081
+
+# Switch to the nexus user to run Nexus
+USER nexus
+
+# Start Nexus
+CMD ["sh", "-c", "${NEXUS_HOME}/bin/nexus run"]

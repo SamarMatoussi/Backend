@@ -1,11 +1,11 @@
 pipelineJob('pipeline') {
   definition {
     cps {
-      script(
-              '''pipeline {
+      script("""
+pipeline {
     agent {
         docker {
-            image 'pipeline/jenkins'
+            image 'maven:3.6.3-openjdk-8'
             args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
@@ -13,28 +13,42 @@ pipelineJob('pipeline') {
         registry = "samarmatoussi/jcasc"
         registryCredential = 'dockerHub'
         dockerImage = ""
-    }                    
+    }
     stages {
-        stage('git') {
+        stage('Clean workspace') {
+            steps {
+                sh 'git clean -xffd'
+            }
+        }
+        stage('Clone repository') {
             steps {
                 echo 'Cloning the repository'
-                git branch: 'master', credentialsId: 'github-credentials', url: 'https://github.com/SamarMatoussi/JCasC.git'
-                sh 'docker run hello-world'
+                git branch: 'master', credentialsId: 'github-credentials', url: 'https://github.com/SamarMatoussi/docker-spring-boot.git'
             }
         }
-        stage('unit_test') {
+        stage('Maven Build') {
             steps {
-                sh 'echo "Start the unit test"'
+                sh 'mvn clean install -DskipTests'
             }
         }
-        stage('Build Image') {
+        stage('Artifact Construction') {
+            steps {
+                sh 'mvn package'
+            }
+        }
+       stage('Deploy to Nexus') {
+    steps {
+        sh 'mvn deploy -DskipTests -Dmaven.repo.local=$HOME/.m2/repository'
+           }
+       }
+        stage('Build Docker Image') {
             steps {
                 script {
                     dockerImage = docker.build("${registry}:$BUILD_NUMBER")
                 }
             }
         }
-        stage('Deploy Image') {
+        stage('Deploy Docker Image') {
             steps {
                 script {
                     docker.withRegistry('', registryCredential) {
@@ -43,18 +57,17 @@ pipelineJob('pipeline') {
                 }
             }
         }
-     stage('Deploy to Production') {
-            steps {
-                script {
-                    docker.withRegistry('', registryCredential) {
-                        dockerImage.pull()
-                        docker.image("${registry}:$BUILD_NUMBER").run()
-                    }
-                }
-            }
-        }    
     }
-}''')
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
+""")
     }
   }
 }
