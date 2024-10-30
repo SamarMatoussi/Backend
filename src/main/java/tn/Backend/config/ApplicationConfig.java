@@ -3,6 +3,7 @@ package tn.Backend.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -14,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import tn.Backend.auditing.ApplicationAuditAware;
 import tn.Backend.repository.UserRepository;
 
 import java.util.Arrays;
@@ -65,5 +67,10 @@ public class ApplicationConfig {
 
     source.registerCorsConfiguration("/**", config);
     return new CorsFilter(source);
+  }
+  @Bean
+  public AuditorAware<String> auditorAware() {
+    return new ApplicationAuditAware();
+
   }
 }

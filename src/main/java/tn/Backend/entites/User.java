@@ -1,7 +1,5 @@
 package tn.Backend.entites;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -21,25 +19,28 @@ import java.util.List;
 @SuperBuilder
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @DiscriminatorColumn(name = "USER_TYPE", discriminatorType = DiscriminatorType.STRING)
-public abstract class User implements UserDetails {
+public abstract class User extends AbstractEntity implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+    @Column(unique = true)
+    private Long cin;
     private String email;
     private String password;
     private String firstname;
     private String lastname;
     private String phone;
     @Builder.Default
-    private boolean isEnabled = false;
+    private Boolean isEnabled = false;
 
     @Enumerated(EnumType.STRING)
     private Role role;
     @OneToMany(mappedBy = "user")
     private List<Token> tokens;
+    @ManyToOne
+    private Agence agence;
 
-
-   @Override
+    @Override
    public Collection<? extends GrantedAuthority> getAuthorities() {
        return List.of(new SimpleGrantedAuthority(role.name()));
    }

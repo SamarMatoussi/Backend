@@ -6,8 +6,7 @@ import lombok.Setter;
 import tn.Backend.auth.RegisterRequest;
 import tn.Backend.entites.Administrateur;
 
-import java.util.List;
-import java.util.stream.Collectors;
+
 
 @Getter
 @Setter
@@ -17,6 +16,7 @@ public class AdministrateurDto extends RegisterRequest {
         return Administrateur.builder()
                 .firstname(request.getFirstname())
                 .lastname(request.getLastname())
+                .cin(request.getCin())
                 .password(request.getPassword())
                 .email(request.getEmail())
                 .role(request.getRole())

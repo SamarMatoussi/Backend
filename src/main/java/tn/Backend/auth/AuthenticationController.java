@@ -6,15 +6,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import tn.Backend.dto.AdministrateurDto;
-import tn.Backend.dto.AgentDto;
-import tn.Backend.dto.ClientDto;
-import tn.Backend.dto.Response;
-import tn.Backend.entites.User;
-import tn.Backend.exception.ResourceNotFound;
 
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -22,15 +15,15 @@ import java.util.List;
 public class AuthenticationController {
 
   private final AuthenticationService service;
-
+/*
   @PostMapping("/registerClient")
   public Response register(
-          @RequestBody @Valid ClientDto userRequest,
+          @RequestBody @Valid EmployéDto userRequest,
           HttpServletRequest request
   )  {
     return service.register(userRequest,request);
   }
-
+*/
 
 
   @PostMapping("/authenticate")

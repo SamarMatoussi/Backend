@@ -18,8 +18,6 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class Administrateur extends User {
 
-
-
 }
 
 

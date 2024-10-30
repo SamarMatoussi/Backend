@@ -1,0 +1,57 @@
+jenkins:
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: ${JENKINS_ADMIN_ID}
+          password: ${JENKINS_ADMIN_PASSWORD}
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Administer:admin"
+        - "Overall/Read:authenticated"
+  remotingSecurity:
+    enabled: true
+  clouds:
+    - docker:
+        containerCap: 5
+        dockerApi:
+          connectTimeout: 60
+          dockerHost:
+            uri: "unix://var/run/docker.sock"
+          readTimeout: 60
+        exposeDockerHost: true
+        name: "dind"
+        templates:
+          - connector: "attach"
+            dockerTemplateBase:
+              cpuPeriod: 0
+              cpuQuota: 0
+              image: "pipeline/agent"
+            instanceCapStr: "10"
+            labelString: "agent"
+            mode: EXCLUSIVE
+            name: "Jenkins Agent"
+            pullStrategy: PULL_ALWAYS
+            pullTimeout: 300
+            remoteFs: "/home/jenkins/agent"
+security:
+  queueItemAuthenticator:
+    authenticators:
+      - global:
+          strategy: triggeringUsersAuthorizationStrategy
+unclassified:
+  location:
+    url: http://server_ip:8080/
+jobs:
+  - file: /var/jenkins_home/pipeline.groovy
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              id: "github-credentials"
+              username: ${GITHUB_USERNAME}
+              password: ${GITHUB_PASSWORD}
+              description: "Sample credentials of exampleuser"
+              scope: GLOBAL

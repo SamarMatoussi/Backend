@@ -21,7 +21,6 @@ public class AdministrateurServiceImpl implements AdministrateurService {
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher publisher;
     private final EmailService emailService;
-
     @Override
     public Response addAgent(AgentDto agentDto) {
 
@@ -54,18 +53,45 @@ public class AdministrateurServiceImpl implements AdministrateurService {
     }
 
     private void sendAgentRegistrationEmail(AgentDto agentDto, HttpServletRequest request) {
-        // Construire le contenu de l'email pour l'agent
-        String subject = "Welcome to our platform";
-        String content = "Dear " + agentDto.getFirstname() + ",\n\n"
-                + "Thank you for registering as an agent.\n"
-                + "Your account has been created successfully.\n"
-                + "Below is your login information:\n"
-                + "Email: " + agentDto.getEmail() + "\n"
-                + "<b>Password: " + agentDto.getPassword() + "</b>\n\n"
-                + "Please note that this is your temporary password. "
-                + "We strongly recommend that you change your password immediately after logging in for the first time.\n\n"
-                + "Please keep this email for your records.\n\n"
-                + "Best regards,\nYour Platform Team";
+        // Construire le contenu de l'email pour l'agent en HTML
+        String subject = "Création de votre compte agent";
+        String content = "<html>"
+                + "<head>"
+                + "<style>"
+                + "    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }"
+                + "    .container { max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }"
+                + "    .header { background-color: #007bff; color: white; padding: 10px 20px; border-radius: 8px 8px 0 0; text-align: center; }"
+                + "    .footer { margin-top: 20px; font-size: 12px; color: #888; text-align: center; }"
+                + "    h2 { margin: 0; font-size: 24px; }"
+                + "    p { font-size: 14px; line-height: 1.6; }"
+                + "    .info { background-color: #e9ecef; padding: 10px; border-radius: 5px; margin: 20px 0; }"
+                + "    .bold { font-weight: bold; }"
+                + "    ul { padding-left: 20px; }"
+                + "</style>"
+                + "</head>"
+                + "<body>"
+                + "<div class='container'>"
+                + "<div class='header'>"
+                + "<h2>Bienvenue sur notre plateforme</h2>"
+                + "</div>"
+                + "<p>Chère " + agentDto.getFirstname() + ",</p>"
+                + "<p>Votre compte agent a été créé avec succès par l'administrateur.</p>"
+                + "<p>Voici vos informations de connexion :</p>"
+                + "<div class='info'>"
+                + "<ul>"
+                + "    <li>Email : <span class='bold'>" + agentDto.getEmail() + "</span></li>"
+                + "    <li>Mot de passe temporaire : <span class='bold'>" + agentDto.getPassword() + "</span></li>"
+                + "</ul>"
+                + "</div>"
+                + "<p>Veuillez noter qu'il s'agit de votre mot de passe temporaire. "
+                + "Pour des raisons de sécurité, nous vous recommandons vivement de le modifier dès votre première connexion.</p>"
+                + "<p>Veuillez conserver cet e-mail pour vos archives.</p>"
+                + "<div class='footer'>"
+                + "<p>Cordialement,<br>L'équipe de la plateforme</p>"
+                + "</div>"
+                + "</div>"
+                + "</body>"
+                + "</html>";
 
         // Envoyer l'email à l'agent
         EmailDetails emailDetails = EmailDetails.builder()
@@ -79,18 +105,13 @@ public class AdministrateurServiceImpl implements AdministrateurService {
 
 
     @Override
-    public List<User> getAllUsers() {
-        return null;
-    }
-
-    @Override
-    public Response revokeAccount(String email, boolean activate) {
-        // Recherchez l'utilisateur par email dans votre système
-        Optional<User> userOptional = repository.findByEmail(email);
+    public Response revokeAccount(Long cin, boolean activate) {
+        // Recherchez l'utilisateur par CIN dans votre système
+        Optional<User> userOptional = repository.findUserByCin(cin);
 
         if (userOptional.isEmpty()) {
             return Response.builder()
-                    .responseMessage("Utilisateur non trouvé pour l'email spécifié")
+                    .responseMessage("Utilisateur non trouvé pour le CIN spécifié")
                     .build();
         }
 
@@ -98,65 +119,130 @@ public class AdministrateurServiceImpl implements AdministrateurService {
         User user = userOptional.get();
 
         // Révoquez ou activez le compte de l'utilisateur en fonction du boolean "activate"
-        user.setEnabled(activate);
+        user.setIsEnabled(activate);
         repository.save(user);
+
+        // Envoyer un email à l'agent pour l'informer du changement de statut
+        sendAccountStatusEmail(user, activate);
 
         if (activate) {
             return Response.builder()
-                    .responseMessage("Le compte de l'utilisateur a été activé avec succès")
-                    .email(user.getEmail()) // Inclure l'adresse e-mail de l'utilisateur dans la réponse
+                    .responseMessage("Le compte de l'utilisateur avec le CIN " + cin + " a été activé avec succès")
                     .build();
         } else {
             return Response.builder()
-                    .responseMessage("Le compte de l'utilisateur a été révoqué avec succès")
-                    .email(user.getEmail()) // Inclure l'adresse e-mail de l'utilisateur dans la réponse
+                    .responseMessage("Le compte de l'utilisateur avec le CIN " + cin + " a été révoqué avec succès")
                     .build();
         }
     }
 
+    private void sendAccountStatusEmail(User user, boolean activate) {
+        String subject = activate ? "Activation de votre compte" : "Révocation de votre compte";
+        String statusMessage = activate ? "activé" : "révoqué";
+
+        // Contenu de l'email avec un style moderne
+        String content = "<html>"
+                + "<head>"
+                + "<style>"
+                + "    body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }"
+                + "    .container { max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); }"
+                + "    .header { background-color: #007bff; color: white; padding: 15px; border-radius: 8px 8px 0 0; text-align: center; }"
+                + "    .footer { margin-top: 20px; font-size: 12px; color: #888; text-align: center; }"
+                + "    h2 { margin: 0; font-size: 20px; }"
+                + "    p { font-size: 14px; line-height: 1.5; }"
+                + "    .status { font-size: 16px; font-weight: bold; color: #007bff; }"
+                + "    .note { margin: 20px 0; font-size: 12px; color: #555; }"
+                + "</style>"
+                + "</head>"
+                + "<body>"
+                + "<div class='container'>"
+                + "<div class='header'>"
+                + "<h2>Notification de Compte</h2>"
+                + "</div>"
+                + "<p>Bonjour <strong>" + user.getFirstname() + "</strong>,</p>"
+                + "<p>Nous souhaitons vous informer que votre compte a été <span class='status'>" + statusMessage + "</span> avec succès.</p>"
+                + "<p>Si vous avez des questions ou des préoccupations, n'hésitez pas à nous contacter.</p>"
+                + "<p class='note'>Merci de votre confiance.</p>"
+                + "<div class='footer'>"
+                + "<p>Cordialement,<br>L'équipe de la plateforme</p>"
+                + "</div>"
+                + "</div>"
+                + "</body>"
+                + "</html>";
+
+        // Préparer les détails de l'email
+        EmailDetails emailDetails = EmailDetails.builder()
+                .to(user.getEmail())
+                .subject(subject)
+                .messageBody(content)
+                .build();
+
+        // Envoyer l'email
+        emailService.sendMail(emailDetails);
+    }
+
+
+
+
+
+
     @Override
-    public List<UserDtoo> getAllUsersExceptAdmin() {
+    public List<UserDto> getAllUsersExceptAdmin() {
         List<User> allUsers = repository.findAll();
         // Exclure les utilisateurs ayant le rôle ADMINISTRATEUR
         return allUsers.stream()
                 .filter(user -> user.getRole() != Role.ADMIN)
-                .map(UserDtoo::fromEntity)
+                .filter(user -> user.getRole() != Role.EMPLOYE)
+                .map(UserDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public Response updateUser(User updatedUser) {
-        // Recherchez l'utilisateur par son identifiant
-        Optional<User> optionalUser = repository.findById(updatedUser.getId());
+    public Optional<User> findUserById(Long id) {
+        return repository.findById(id);
+    }
 
-        if (optionalUser.isEmpty()) {
+    @Override
+    public Response updateUser(User user) {
+        try {
+            repository.save(user);
             return Response.builder()
-                    .responseMessage("Utilisateur non trouvé pour l'identifiant spécifié")
+                    .responseMessage("L'utilisateur a été mis à jour avec succès")
+                    .build();
+        } catch (Exception e) {
+            return Response.builder()
+                    .responseMessage("Une erreur s'est produite lors de la mise à jour de l'utilisateur")
+                    .build();
+        }
+    }
+
+    @Override
+    public Response deleteUser(Long id) {
+        // Recherchez l'utilisateur par ID dans votre système
+        Optional<User> userOptional = repository.findById(id);
+
+        if (userOptional.isEmpty()) {
+            return Response.builder()
+                    .responseMessage("Utilisateur non trouvé pour l'ID spécifié")
                     .build();
         }
 
-        User existingUser = optionalUser.get();
-
-        // Mettre à jour les informations de l'utilisateur avec les données fournies dans updatedUser
-        existingUser.setFirstname(updatedUser.getFirstname());
-        existingUser.setLastname(updatedUser.getLastname());
-        existingUser.setPhone(updatedUser.getPhone());
-
-        // Vérifier si le mot de passe a été fourni, puis le mettre à jour si nécessaire
-        if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
-            existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
-        }
-
-        // Enregistrer les modifications dans la base de données
-        repository.save(existingUser);
+        // Supprimez l'utilisateur
+        repository.deleteById(id);
 
         return Response.builder()
-                .responseMessage("Les informations de l'utilisateur ont été mises à jour avec succès")
+                .responseMessage("L'utilisateur avec l'ID " + id + " a été supprimé avec succès")
                 .build();
     }
     @Override
-    public Optional<User> findUserById(Long id) {
-        return repository.findById(id);
+    public List<UserDto> getAllAdmin() {
+        List<User> allUsers = repository.findAll();
+        // Filter users with the role ADMIN
+        List<UserDto> adminUsers = allUsers.stream()
+                .filter(user -> user.getRole() == Role.ADMIN)
+                .map(UserDto::fromEntity)
+                .collect(Collectors.toList());
+        return adminUsers;
     }
 
 }

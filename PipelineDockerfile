@@ -1,0 +1,31 @@
+FROM ubuntu:latest
+
+USER root
+#installing git to clone the repository
+RUN apt-get update -yqq
+RUN apt-get install git -yqq
+RUN echo "git is installed successfully"
+#installing docker (to create and push images)
+RUN apt-get update -yqq 
+RUN apt-get install ca-certificates curl gnupg -yqq
+#RUN apt-get install -m 0755 -d /etc/apt/keyrings -yqq
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+RUN chmod a+r /etc/apt/keyrings/docker.gpg
+RUN echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
+RUN apt-get update -yqq
+RUN apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -yqq
+#RUN docker run -v /var/run/docker.sock:/var/run/docker.sock hello-world
+RUN echo "docker is installed successfully"
+#installing phpunit for unit tests
+RUN apt-get update
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get install -y php
+RUN apt-get clean
+RUN apt-get install -y php-xml php-dom php-json php-mbstring php-tokenizer php-xmlwriter
+RUN curl --location --output /usr/local/bin/phpunit "https://phar.phpunit.de/phpunit.phar"
+RUN chmod +x /usr/local/bin/phpunit
+RUN echo "php is installed successfully" 
+#

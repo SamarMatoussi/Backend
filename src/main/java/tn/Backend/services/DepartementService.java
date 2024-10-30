@@ -2,16 +2,17 @@ package tn.Backend.services;
 
 
 import tn.Backend.entites.Departement;
-import tn.Backend.form.DepartementFrom;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 public interface DepartementService {
+    List<Departement> getAllDepartements();
 
-    public Departement addDepartement(DepartementFrom form);
-    public Departement updateDepartement(Long id, DepartementFrom form);
-    public Departement getDepartement(Long id);
-    public Map<String,Boolean> deleteDepartement(Long id);
-    public List<Departement> getDepartement();
+    Optional<Departement> getDepartementById(Long id);
+
+    Departement saveOrUpdateDepartement(Departement departement);
+
+    void deleteDepartement(Long id);
+
 }

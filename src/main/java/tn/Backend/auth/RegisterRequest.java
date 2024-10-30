@@ -14,8 +14,11 @@ public class RegisterRequest {
 
   private String firstname;
   private String lastname;
+  private Long cin;
   private String phone;
   private String email;
   private String password;
   private Role role;
+  private Boolean isEnabled;
+
 }

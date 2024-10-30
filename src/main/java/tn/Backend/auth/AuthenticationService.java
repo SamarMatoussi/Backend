@@ -2,6 +2,7 @@ package tn.Backend.auth;
 
 import java.io.IOException;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,12 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 import tn.Backend.config.JwtService;
-import tn.Backend.dto.AdministrateurDto;
-import tn.Backend.dto.AgentDto;
-import tn.Backend.dto.ClientDto;
-import tn.Backend.dto.Response;
 import tn.Backend.entites.*;
-import tn.Backend.listener.RegistrationCompleteEvent;
 import tn.Backend.repository.UserRepository;
 import tn.Backend.token.Token;
 import tn.Backend.token.TokenRepository;
@@ -39,7 +35,7 @@ public class AuthenticationService {
   private final JwtService jwtService;
   private final AuthenticationManager authenticationManager;
   private final ApplicationEventPublisher publisher;
-
+/*
   public Response register(RegisterRequest userRequest, final HttpServletRequest request) {
 
     boolean userExists = repository.findAll()
@@ -55,20 +51,20 @@ public class AuthenticationService {
     User user ;
     User savedUser = null ;
 
-      user =new Client();
-      user = ClientDto.toEntity((ClientDto)userRequest);
+      user =new Employé();
+      user = EmployéDto.toEntity((EmployéDto)userRequest);
       user.setPassword(passwordEncoder.encode(user.getPassword()));
       user.setRole(Role.CLIENT);
       var saveUsers = repository.save(user);
 
-      publisher.publishEvent(new RegistrationCompleteEvent((Client) saveUsers, applicationUrl(request)));
+      publisher.publishEvent(new RegistrationCompleteEvent((Employé) saveUsers, applicationUrl(request)));
 
       return Response.builder()
               .responseMessage("register")
               .email(user.getEmail())
               .build();
     }
-
+*/
   public AuthenticationResponse authenticate(AuthenticationRequest request) {
     authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(
@@ -85,6 +81,7 @@ public class AuthenticationService {
     return AuthenticationResponse.builder()
             .accessToken(jwtToken)
             .refreshToken(refreshToken)
+            .role(user.getRole().name())
             .build();
   }
 
@@ -137,18 +134,18 @@ public class AuthenticationService {
       }
     }
   }
-
+@PostConstruct
   public void createdefeultadm() {
     Administrateur user =new Administrateur();
     User savedUser = null;
-    String email = "admin@gmail.com";
+    String email = "responsablesysteme@gmail.com";
     if (!repository.existsByEmail(email)) {
-      user.setEmail("admin@gmail.com");
-      user.setPassword(new BCryptPasswordEncoder().encode("admin"));
+      user.setEmail("responsablesysteme@gmail.com");
+      user.setPassword(new BCryptPasswordEncoder().encode("Administrateur123456*"));
       user.setFirstname("Admin");
       user.setLastname("Admin");
       user.setPhone("98745639");
-      user.setEnabled(true);
+      user.setIsEnabled(true);
       user.setRole(Role.ADMIN);
       savedUser = repository.save((Administrateur) user);
     }
