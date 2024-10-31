@@ -1,11 +1,11 @@
 pipelineJob('pipeline') {
-  definition {
-    cps {
-      script("""
+    definition {
+        cps {
+            script("""
 pipeline {
     agent {
         docker {
-            image 'maven:3.6.3-openjdk-8'
+            image 'maven:3.8.6-openjdk-17'
             args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
@@ -36,11 +36,11 @@ pipeline {
                 sh 'mvn package'
             }
         }
-       stage('Deploy to Nexus') {
-    steps {
-        sh 'mvn deploy -DskipTests -Dmaven.repo.local=$HOME/.m2/repository'
-           }
-       }
+        stage('Deploy to Nexus') {
+            steps {
+                sh 'mvn deploy -DskipTests -Dmaven.repo.local=$HOME/.m2/repository'
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 script {
@@ -68,6 +68,6 @@ pipeline {
     }
 }
 """)
+        }
     }
-  }
 }

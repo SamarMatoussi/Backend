@@ -32,7 +32,7 @@ services:
   maven:
     build:
       context: .
-      dockerfile: ./Dockerfile
+      dockerfile: Dockerfile  # Assurez-vous que le Dockerfile est à la racine du contexte
     container_name: maven
 
 volumes:
