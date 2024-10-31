@@ -1,17 +1,66 @@
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              description: "Sample credentials of exampleuser"
+              id: "github-credentials"
+              password: "{AQAAABAAAAAwN3oKH84wlLIZiVkLpH4xQ+F6qNV68TVypWzTCj2+A6wsSKAZ87Df7KnHZZa16nwit3ixFTDq0LyeNlxI6wEjxw==}"
+              scope: GLOBAL
+              username: "SamarMatoussi"
+          - usernamePassword:
+              id: "dockerHub"
+              password: "{AQAAABAAAAAQEQGj3HN1yOG2VaCiwIBUuhKMzNl5p0XfPdO8XMNMeJY=}"
+              scope: GLOBAL
+              username: "samarmatoussi"
 jenkins:
   agentProtocols:
     - "JNLP4-connect"
     - "Ping"
   authorizationStrategy:
-    loggedInUsersCanDoAnything:
-      allowAnonymousRead: false
+    globalMatrix:
+      entries:
+        - userOrGroup:
+            name: "admin"
+            permissions:
+              - "Overall/Administer"
+        - userOrGroup:
+            name: "authenticated"
+            permissions:
+              - "Overall/Read"
+  clouds:
+    - docker:
+        containerCap: 5
+        dockerApi:
+          connectTimeout: 60
+          dockerHost:
+            uri: "unix://var/run/docker.sock"
+          readTimeout: 60
+        exposeDockerHost: true
+        name: "dind"
+        templates:
+          - connector: "attach"
+            dockerTemplateBase:
+              cpuPeriod: 0
+              cpuQuota: 0
+              image: "pipeline/agent"
+            instanceCapStr: "10"
+            labelString: "agent"
+            mode: EXCLUSIVE
+            name: "Jenkins Agent"
+            pullStrategy: PULL_ALWAYS
+            pullTimeout: 300
+            remoteFs: "/home/jenkins/agent"
   crumbIssuer:
     standard:
       excludeClientIPFromCrumb: false
   disableRememberMe: false
   disabledAdministrativeMonitors:
-    - "jenkins.diagnostics.RootUrlNotSetMonitor"
+    - "org.jenkinsci.plugins.matrixauth.AmbiguityMonitor"
+    - "jenkins.diagnostics.ControllerExecutorsAgents"
+    - "hudson.diagnosis.ReverseProxySetupMonitor"
   labelAtoms:
+    - name: "agent"
     - name: "built-in"
   markupFormatter: "plainText"
   mode: NORMAL
@@ -44,11 +93,15 @@ jenkins:
         - id: "admin"
           name: "admin"
           properties:
+            - "apiToken"
             - "consoleUrlProvider"
+            - "mailer"
             - "myView"
+            - preferredProvider:
+                providerId: "default"
             - "timezone"
             - "experimentalFlags"
-            - "apiToken"
+            - "favorite"
   slaveAgentPort: 50000
   updateCenter:
     sites:
@@ -63,28 +116,39 @@ globalCredentialsConfiguration:
     providerFilter: "none"
     typeFilter: "none"
 appearance:
-  pipelineGraphView:
-    showGraphOnBuildPage: false
-    showGraphOnJobPage: false
   prism:
     theme: PRISM
-  themeManager:
-    disableUserThemes: false
 security:
   apiToken:
     creationOfLegacyTokenEnabled: false
     tokenGenerationOnCreationEnabled: false
     usageStatisticsEnabled: true
-  cps:
-    hideSandbox: false
   gitHooks:
     allowedOnAgents: false
     allowedOnController: false
   gitHostKeyVerificationConfiguration:
     sshHostKeyVerificationStrategy: "knownHostsFileVerificationStrategy"
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: true
+  queueItemAuthenticator:
+    authenticators:
+      - global:
+          strategy: "triggeringUsersAuthorizationStrategy"
+  sSHD:
+    port: -1
   scriptApproval:
-    forceSandbox: false
+    approvedScriptHashes:
+      - "SHA512:1ca02ff87238cf1fb95779ea7764bd9e71c030be51590dde028d43a86fcdb7016e9e8be3f71d9dba348631c44fcd8e9dbb2f76244727bd99e1e4c59f277b24a8"
+      - "SHA512:40b93b42ec13dc206062cd1bde27789a8d8ad6a8b190752e3d6eea4dbcc7ddbf6e6636e97db6b8b1ca7c07bcdfae84d3031bcc5fe6ac787732689eda6a8dc34b"
+      - "SHA512:a8f34ce6b1f69910c35501f96b2f466fe2c780bb4b533694f18af6e88e4fbce69abaa3bcd52ec5a01288c03e6e4aaabbafc440f2ea6a4238a28bb6b2e2024c4b"
 unclassified:
+  bitbucketEndpointConfiguration:
+    endpoints:
+      - bitbucketCloudEndpoint:
+          enableCache: false
+          manageHooks: false
+          repositoriesCacheDuration: 0
+          teamCacheDuration: 0
   buildDiscarders:
     configuredBuildDiscarders:
       - "jobBuildDiscarder"
@@ -117,7 +181,7 @@ unclassified:
   gitHubConfiguration:
     apiRateLimitChecker: ThrottleForNormalize
   gitHubPluginConfig:
-    hookUrl: "http://172.10.0.140:8084/github-webhook/"
+    hookUrl: "http://server_ip:8080/github-webhook/"
   globalTimeOutConfiguration:
     operations:
       - "abortOperation"
@@ -133,6 +197,7 @@ unclassified:
     storage: "file"
   location:
     adminAddress: "l'adresse n'est pas encore configurée <nobody@nowhere>"
+    url: "http://server_ip:8080/"
   mailer:
     charset: "UTF-8"
     useSsl: false
@@ -153,6 +218,8 @@ unclassified:
     allPipelines: false
     elapsedTimeFormat: "'<b>'HH:mm:ss.S'</b> '"
     systemTimeFormat: "'<b>'HH:mm:ss'</b> '"
+  whitelist:
+    enabled: false
 tool:
   git:
     installations:
@@ -161,10 +228,3 @@ tool:
   mavenGlobalConfig:
     globalSettingsProvider: "standard"
     settingsProvider: "standard"
-  pipelineMaven:
-    globalTraceability: false
-    triggerDownstreamUponResultAborted: false
-    triggerDownstreamUponResultFailure: false
-    triggerDownstreamUponResultNotBuilt: false
-    triggerDownstreamUponResultSuccess: true
-    triggerDownstreamUponResultUnstable: false
