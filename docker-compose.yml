@@ -1,8 +1,6 @@
-version: '3.3'
-
 services:
   jenkins:
-    image: jenkins:jcasc
+    image: jenkins/jenkins:lts
     container_name: jenkins
     environment:
       - CASC_JENKINS_CONFIG=/var/jenkins_home/casc.yaml
